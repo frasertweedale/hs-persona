@@ -24,6 +24,9 @@ module Crypto.Persona
   , SupportDocument(..)
   , Principal(..)
   , IdentityCertificate(..)
+
+  , provisioningApiJsUrl
+  , authenticationApiJsUrl
   ) where
 
 import Prelude hiding (exp)
@@ -110,3 +113,10 @@ instance FromCompact IdentityCertificate where
 
 instance ToCompact IdentityCertificate where
   toCompact (IdentityCertificate jwt _ _ _ _) = toCompact jwt
+
+
+provisioningApiJsUrl :: String
+provisioningApiJsUrl = "https://login.persona.org/provisioning_api.js"
+
+authenticationApiJsUrl :: String
+authenticationApiJsUrl = "https://login.persona.org/provisioning_api.js"

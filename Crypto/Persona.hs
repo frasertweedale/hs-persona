@@ -40,7 +40,7 @@ import qualified Data.Text as T
 import Network.URI
 
 import Crypto.JOSE.Compact
-import Crypto.JOSE.JWK
+import Crypto.JOSE.Legacy
 import Crypto.JWT
 
 
@@ -58,7 +58,7 @@ parseRelativeURI = fmap RelativeURI . Network.URI.parseRelativeReference
 
 
 data SupportDocument = SupportDocument
-    { publicKey       :: JWK
+    { publicKey       :: JWK'
     , authentication  :: RelativeURI
     , provisioning    :: RelativeURI
     }
@@ -94,7 +94,7 @@ data IdentityCertificate = IdentityCertificate
   { certJWT :: JWT
   , certIss :: StringOrURI
   , certExp :: IntDate
-  , certPub :: JWK
+  , certPub :: JWK'
   , certPri :: Principal
   }
 

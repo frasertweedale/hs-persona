@@ -1,5 +1,5 @@
 -- This file is part of persona - Persona (BrowserID) library
--- Copyright (C) 2013  Fraser Tweedale
+-- Copyright (C) 2013, 2014  Fraser Tweedale
 --
 -- persona is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU Affero General Public License as published by
@@ -39,7 +39,7 @@ import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import Network.URI
 
-import Crypto.JOSE.Compact
+import Crypto.JOSE
 import Crypto.JOSE.Legacy
 import Crypto.JWT
 
@@ -101,14 +101,18 @@ data IdentityCertificate = IdentityCertificate
 instance FromCompact IdentityCertificate where
   fromCompact xs = do
     jwt <- fromCompact xs
-    iss <- maybe (Left "missing iss") Right $ claimIss $ jwtClaimsSet jwt
-    exp <- maybe (Left "missing exp") Right $ claimExp $ jwtClaimsSet jwt
-    pubValue <- maybe (Left "missing \"public-key\"") Right $
+    iss <- maybe (Left $ JSONDecodeError "missing iss") Right $
+      claimIss $ jwtClaimsSet jwt
+    exp <- maybe (Left $ JSONDecodeError "missing exp") Right $
+      claimExp $ jwtClaimsSet jwt
+    pubValue <- maybe (Left $ JSONDecodeError "missing \"public-key\"") Right $
       M.lookup "public-key" $ unregisteredClaims $ jwtClaimsSet jwt
-    pub <- parseEither parseJSON pubValue
-    priValue <- maybe (Left "missing key \"principal\"") Right $
+    pub <- either (Left . JSONDecodeError) Right $
+      parseEither parseJSON pubValue
+    priValue <- maybe (Left $ JSONDecodeError "missing \"principal\"") Right $
       M.lookup "principal" $ unregisteredClaims $ jwtClaimsSet jwt
-    pri <- parseEither parseJSON priValue
+    pri <- either (Left . JSONDecodeError) Right $
+      parseEither parseJSON priValue
     return $ IdentityCertificate jwt iss exp pub pri
 
 instance ToCompact IdentityCertificate where

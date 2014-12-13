@@ -93,7 +93,7 @@ instance ToJSON Principal where
 data IdentityCertificate = IdentityCertificate
   { certJWT :: JWT
   , certIss :: StringOrURI
-  , certExp :: IntDate
+  , certExp :: NumericDate
   , certPub :: JWK'
   , certPri :: Principal
   }

@@ -31,7 +31,7 @@ library
     , network-uri >= 2.6
     , text >= 0.11
     , unordered-containers >= 0.2
-    , jose >= 0.2.31.0
+    , jose >= 0.2.38.0
 
   exposed-modules:
     Crypto.Persona

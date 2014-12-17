@@ -16,6 +16,11 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+
+Mozilla Persona (formerly BrowserID) types.
+
+-}
 module Crypto.Persona
   (
     RelativeURI()
@@ -44,6 +49,8 @@ import Crypto.JOSE.Legacy
 import Crypto.JWT
 
 
+-- | Newtype of URI resticted to relative URIs.
+--
 newtype RelativeURI = RelativeURI URI deriving (Eq, Show)
 
 instance FromJSON RelativeURI where
@@ -53,10 +60,16 @@ instance FromJSON RelativeURI where
 instance ToJSON RelativeURI where
   toJSON (RelativeURI uri) = String $ T.pack $ show uri
 
+-- | Construct a 'RelativeURI'
+--
 parseRelativeURI :: String -> Maybe RelativeURI
 parseRelativeURI = fmap RelativeURI . Network.URI.parseRelativeReference
 
 
+-- | Basic /support document/.
+--
+-- See https://developer.mozilla.org/en-US/Persona/.well-known-browserid.
+--
 data SupportDocument = SupportDocument
     { publicKey       :: JWK'
     , authentication  :: RelativeURI
@@ -77,7 +90,10 @@ instance ToJSON SupportDocument where
     ]
 
 
--- TODO better email and domain name parsing
+-- | Persona identity principal
+--
+-- TODO: actually restrict to email addresses or hostnames.
+--
 data Principal = EmailPrincipal T.Text | HostPrincipal T.Text
 
 instance FromJSON Principal where
@@ -90,6 +106,10 @@ instance ToJSON Principal where
   toJSON (HostPrincipal s) = object ["host" .= s]
 
 
+-- | Identity Certificate.
+--
+-- See https://github.com/mozilla/id-specs/blob/prod/browserid/index.md#identity-certificate.
+--
 data IdentityCertificate = IdentityCertificate
   { certJWT :: JWT
   , certIss :: StringOrURI
@@ -119,8 +139,12 @@ instance ToCompact IdentityCertificate where
   toCompact (IdentityCertificate jwt _ _ _ _) = toCompact jwt
 
 
+-- | URI to official provisioning JavaScript.
+--
 provisioningApiJsUrl :: String
 provisioningApiJsUrl = "https://login.persona.org/provisioning_api.js"
 
+-- | URI to official authentication JavaScript.
+--
 authenticationApiJsUrl :: String
 authenticationApiJsUrl = "https://login.persona.org/provisioning_api.js"

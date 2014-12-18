@@ -15,6 +15,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-|
 
@@ -26,9 +27,15 @@ module Crypto.Persona
     RelativeURI()
   , parseRelativeURI
 
-  , SupportDocument(..)
+  , SupportDocument
+  , publicKey
+  , authentication
+  , provisioning
+  , supportDocument
+
   , Principal(..)
-  , IdentityCertificate(..)
+
+  , certify
 
   , provisioningApiJsUrl
   , authenticationApiJsUrl
@@ -38,9 +45,9 @@ import Prelude hiding (exp)
 
 import Control.Applicative
 
+import Control.Lens hiding ((.=))
 import Data.Aeson
-import Data.Aeson.Types
-import qualified Data.HashMap.Strict as M
+import Data.Default.Class (def)
 import qualified Data.Text as T
 import Network.URI
 
@@ -71,10 +78,11 @@ parseRelativeURI = fmap RelativeURI . Network.URI.parseRelativeReference
 -- See https://developer.mozilla.org/en-US/Persona/.well-known-browserid.
 --
 data SupportDocument = SupportDocument
-    { publicKey       :: JWK'
-    , authentication  :: RelativeURI
-    , provisioning    :: RelativeURI
+    { _publicKey       :: JWK'
+    , _authentication  :: RelativeURI
+    , _provisioning    :: RelativeURI
     }
+makeLenses ''SupportDocument
 
 instance FromJSON SupportDocument where
   parseJSON = withObject "SupportDocument" (\o -> SupportDocument
@@ -88,6 +96,16 @@ instance ToJSON SupportDocument where
     , "authentication" .= a
     , "provisioning" .= p
     ]
+
+-- | Construct a 'SupportDocument'
+--
+-- The smart constructor is needed to ensure that any private key
+-- material is stripped from the key.  Although RSA keys always have
+-- public material the result is a 'Maybe SupportDocument' to enable
+-- a move to the JSON Web Key (JWK) format.
+--
+supportDocument :: JWK' -> RelativeURI -> RelativeURI -> Maybe SupportDocument
+supportDocument k a p = publicKey public $ SupportDocument k a p
 
 
 -- | Persona identity principal
@@ -106,37 +124,24 @@ instance ToJSON Principal where
   toJSON (HostPrincipal s) = object ["host" .= s]
 
 
--- | Identity Certificate.
---
--- See https://github.com/mozilla/id-specs/blob/prod/browserid/index.md#identity-certificate.
---
-data IdentityCertificate = IdentityCertificate
-  { certJWT :: JWT
-  , certIss :: StringOrURI
-  , certExp :: NumericDate
-  , certPub :: JWK'
-  , certPri :: Principal
-  }
-
-instance FromCompact IdentityCertificate where
-  fromCompact xs = do
-    jwt <- fromCompact xs
-    iss <- maybe (Left $ JSONDecodeError "missing iss") Right $
-      claimIss $ jwtClaimsSet jwt
-    exp <- maybe (Left $ JSONDecodeError "missing exp") Right $
-      claimExp $ jwtClaimsSet jwt
-    pubValue <- maybe (Left $ JSONDecodeError "missing \"public-key\"") Right $
-      M.lookup "public-key" $ unregisteredClaims $ jwtClaimsSet jwt
-    pub <- either (Left . JSONDecodeError) Right $
-      parseEither parseJSON pubValue
-    priValue <- maybe (Left $ JSONDecodeError "missing \"principal\"") Right $
-      M.lookup "principal" $ unregisteredClaims $ jwtClaimsSet jwt
-    pri <- either (Left . JSONDecodeError) Right $
-      parseEither parseJSON priValue
-    return $ IdentityCertificate jwt iss exp pub pri
-
-instance ToCompact IdentityCertificate where
-  toCompact (IdentityCertificate jwt _ _ _ _) = toCompact jwt
+certify
+  :: CPRG g
+  => g
+  -> JWK'         -- ^ Signing key
+  -> StringOrURI  -- ^ Issuer
+  -> NumericDate  -- ^ Expiry
+  -> JWK'         -- ^ Public key
+  -> Principal    -- ^ Principal
+  -> (Either Error JWT, g)
+certify g k iss exp pk principal =
+  createJWSJWT g (toJWK k) header claims
+  where
+  claims = emptyClaimsSet
+    & claimIss .~ Just iss
+    & claimExp .~ Just exp
+    & addClaim "public-key" (toJSON pk)
+    & addClaim "principal" (toJSON principal)
+  header = def { headerAlg = Just RS256 }
 
 
 -- | URI to official provisioning JavaScript.

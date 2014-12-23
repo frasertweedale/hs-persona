@@ -27,6 +27,8 @@ module Crypto.Persona
     RelativeURI()
   , parseRelativeURI
 
+  , DelegatedSupportDocument(..)
+
   , SupportDocument
   , publicKey
   , authentication
@@ -106,6 +108,18 @@ instance ToJSON SupportDocument where
 --
 supportDocument :: JWK' -> RelativeURI -> RelativeURI -> Maybe SupportDocument
 supportDocument k a p = publicKey public $ SupportDocument k a p
+
+
+-- | /Delegated support document/
+--
+newtype DelegatedSupportDocument = DelegatedSupportDocument String
+
+instance FromJSON DelegatedSupportDocument where
+  parseJSON = withObject "DelegatedSupportDocument" $ \o ->
+    DelegatedSupportDocument <$> o .: "authority"
+
+instance ToJSON DelegatedSupportDocument where
+  toJSON (DelegatedSupportDocument s) = object [ "authority" .= s ]
 
 
 -- | Persona identity principal

@@ -145,15 +145,17 @@ certify
   -> JWK'         -- ^ Signing key
   -> StringOrURI  -- ^ Issuer
   -> NumericDate  -- ^ Expiry
+  -> NumericDate  -- ^ Issued at
   -> Value        -- ^ Public key object
   -> Principal    -- ^ Principal
   -> (Either Error JWT, g)
-certify g k iss exp pk principal =
+certify g k iss exp iat pk principal =
   createJWSJWT g (toJWK k) header claims
   where
   claims = emptyClaimsSet
     & claimIss .~ Just iss
     & claimExp .~ Just (toMs exp)
+    & claimIat .~ Just (toMs iat)
     & addClaim "public-key" (toJSON pk)
     & addClaim "principal" (toJSON principal)
   header = def { headerAlg = Just RS256 }

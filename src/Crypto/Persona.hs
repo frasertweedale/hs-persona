@@ -51,6 +51,7 @@ import Control.Lens hiding ((.=))
 import Data.Aeson
 import Data.Default.Class (def)
 import qualified Data.Text as T
+import Data.Time
 import Data.Time.Clock.POSIX
 import Network.URI
 
@@ -144,23 +145,30 @@ certify
   => g
   -> JWK'         -- ^ Signing key
   -> StringOrURI  -- ^ Issuer
-  -> NumericDate  -- ^ Expiry
-  -> NumericDate  -- ^ Issued at
+  -> UTCTime
+  -- ^ Current time.  Will be used for the "iat" claim and in the
+  -- calculation of the "exp" claim.
+  -> Integer
+  -- ^ Requested duration.  Will be used in the calculation of the
+  -- "exp" claim.
   -> Value        -- ^ Public key object
   -> Principal    -- ^ Principal
   -> (Either Error JWT, g)
-certify g k iss exp iat pk principal =
+certify g k iss t dur pk principal =
   createJWSJWT g (toJWK k) header claims
   where
   claims = emptyClaimsSet
     & claimIss .~ Just iss
-    & claimExp .~ Just (toMs exp)
-    & claimIat .~ Just (toMs iat)
+    & claimExp .~ Just exp
+    & claimIat .~ Just iat
     & addClaim "public-key" (toJSON pk)
     & addClaim "principal" (toJSON principal)
   header = def { headerAlg = Just RS256 }
-  toMs (NumericDate x) = NumericDate $
-    posixSecondsToUTCTime $ (* 1000) $ utcTimeToPOSIXSeconds x
+  -- SHOULD NOT issue cert valid longer than duration
+  -- MUST NOT issue cert valid longer than 24 hours
+  exp = toMs $ addUTCTime (fromRational $ toRational $ min dur 86400) t
+  iat = toMs t
+  toMs = NumericDate . posixSecondsToUTCTime . (* 1000) . utcTimeToPOSIXSeconds
 
 
 -- | URI to official provisioning JavaScript.

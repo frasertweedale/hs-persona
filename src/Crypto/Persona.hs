@@ -51,6 +51,7 @@ import Control.Lens hiding ((.=))
 import Data.Aeson
 import Data.Default.Class (def)
 import qualified Data.Text as T
+import Data.Time.Clock.POSIX
 import Network.URI
 
 import Crypto.JOSE
@@ -152,10 +153,12 @@ certify g k iss exp pk principal =
   where
   claims = emptyClaimsSet
     & claimIss .~ Just iss
-    & claimExp .~ Just exp
+    & claimExp .~ Just (toMs exp)
     & addClaim "public-key" (toJSON pk)
     & addClaim "principal" (toJSON principal)
   header = def { headerAlg = Just RS256 }
+  toMs (NumericDate x) = NumericDate $
+    posixSecondsToUTCTime $ (* 1000) $ utcTimeToPOSIXSeconds x
 
 
 -- | URI to official provisioning JavaScript.

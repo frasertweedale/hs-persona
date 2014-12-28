@@ -144,7 +144,7 @@ certify
   -> JWK'         -- ^ Signing key
   -> StringOrURI  -- ^ Issuer
   -> NumericDate  -- ^ Expiry
-  -> T.Text       -- ^ Public key
+  -> Value        -- ^ Public key object
   -> Principal    -- ^ Principal
   -> (Either Error JWT, g)
 certify g k iss exp pk principal =

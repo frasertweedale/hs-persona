@@ -140,6 +140,8 @@ instance ToJSON Principal where
   toJSON (HostPrincipal s) = object ["host" .= s]
 
 
+-- | Create an identity assertion.
+--
 certify
   :: CPRG g
   => g
@@ -151,7 +153,7 @@ certify
   -> Integer
   -- ^ Requested duration.  Will be used in the calculation of the
   -- "exp" claim.
-  -> Value        -- ^ Public key object
+  -> Value        -- ^ User public key object
   -> Principal    -- ^ Principal
   -> (Either Error JWT, g)
 certify g k iss t dur pk principal =

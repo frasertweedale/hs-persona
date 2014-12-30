@@ -27,7 +27,8 @@ module Crypto.Persona
     RelativeURI()
   , parseRelativeURI
 
-  , DelegatedSupportDocument(..)
+  , DelegatedSupportDocument(DelegatedSupportDocument)
+  , authority
 
   , SupportDocument
   , publicKey
@@ -53,7 +54,7 @@ import Data.Default.Class (def)
 import qualified Data.Text as T
 import Data.Time
 import Data.Time.Clock.POSIX
-import Network.URI
+import Network.URI (URI, parseRelativeReference)
 
 import Crypto.JOSE
 import Crypto.JOSE.Legacy
@@ -117,7 +118,10 @@ supportDocument k a p = publicKey public $ SupportDocument k a p
 
 -- | /Delegated support document/
 --
-newtype DelegatedSupportDocument = DelegatedSupportDocument String
+newtype DelegatedSupportDocument = DelegatedSupportDocument
+  { _authority :: String
+  } deriving (Eq, Show)
+makeLenses ''DelegatedSupportDocument
 
 instance FromJSON DelegatedSupportDocument where
   parseJSON = withObject "DelegatedSupportDocument" $ \o ->

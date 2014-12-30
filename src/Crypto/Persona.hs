@@ -62,7 +62,10 @@ import Crypto.JWT
 
 -- | Newtype of URI resticted to relative URIs.
 --
-newtype RelativeURI = RelativeURI URI deriving (Eq, Show)
+newtype RelativeURI = RelativeURI URI deriving (Eq)
+
+instance Show RelativeURI where
+  show (RelativeURI uri) = show uri
 
 instance FromJSON RelativeURI where
   parseJSON = withText "URI" $

@@ -83,7 +83,7 @@ parseRelativeURI = fmap RelativeURI . Network.URI.parseRelativeReference
 
 -- | Basic /support document/.
 --
--- See https://developer.mozilla.org/en-US/Persona/.well-known-browserid.
+-- See <https://developer.mozilla.org/en-US/Persona/.well-known-browserid>.
 --
 data SupportDocument = SupportDocument
     { _publicKey       :: JWK'

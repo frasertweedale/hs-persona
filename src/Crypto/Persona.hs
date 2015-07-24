@@ -1,5 +1,5 @@
 -- This file is part of persona - Persona (BrowserID) library
--- Copyright (C) 2013, 2014  Fraser Tweedale
+-- Copyright (C) 2013, 2014, 2015  Fraser Tweedale
 --
 -- persona is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU Affero General Public License as published by
@@ -48,7 +48,7 @@ import Prelude hiding (exp)
 
 import Control.Applicative
 
-import Control.Lens hiding ((.=))
+import Control.Lens hiding (iat, (.=))
 import Data.Aeson
 import Data.Default.Class (def)
 import qualified Data.Text as T
@@ -150,9 +150,8 @@ instance ToJSON Principal where
 -- | Create an identity assertion.
 --
 certify
-  :: CPRG g
-  => g
-  -> JWK'         -- ^ Signing key
+  :: MonadRandom m
+  => JWK'         -- ^ Signing key
   -> StringOrURI  -- ^ Issuer
   -> UTCTime
   -- ^ Current time.  Will be used for the "iat" claim and in the
@@ -162,9 +161,9 @@ certify
   -- "exp" claim.
   -> Value        -- ^ User public key object
   -> Principal    -- ^ Principal
-  -> (Either Error JWT, g)
-certify g k iss t dur pk principal =
-  createJWSJWT g (toJWK k) header claims
+  -> m (Either Error JWT)
+certify k iss t dur pk principal =
+  createJWSJWT (toJWK k) header claims
   where
   claims = emptyClaimsSet
     & claimIss .~ Just iss

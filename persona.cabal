@@ -1,5 +1,5 @@
 name:                persona
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Persona (BrowserID) library
 description:         Persona (BrowesrID) library
 homepage:            https://github.com/frasertweedale/hs-persona

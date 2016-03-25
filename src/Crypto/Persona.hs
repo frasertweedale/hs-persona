@@ -1,5 +1,5 @@
 -- This file is part of persona - Persona (BrowserID) library
--- Copyright (C) 2013, 2014, 2015  Fraser Tweedale
+-- Copyright (C) 2013, 2014, 2015, 2016  Fraser Tweedale
 --
 -- persona is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU Affero General Public License as published by
@@ -113,7 +113,8 @@ instance ToJSON SupportDocument where
 -- a move to the JSON Web Key (JWK) format.
 --
 supportDocument :: JWK' -> RelativeURI -> RelativeURI -> Maybe SupportDocument
-supportDocument k a p = publicKey public $ SupportDocument k a p
+supportDocument k a p =
+  SupportDocument k a p & publicKey (preview asPublicKey)
 
 
 -- | /Delegated support document/
